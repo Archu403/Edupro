@@ -155,7 +155,9 @@ fig, ax=plt.subplots(figsize=(10,5))
 
 expert.plot(kind="bar", ax=ax)
 
-st.pyplot(fig)st.subheader("💳 Payment Method")
+st.pyplot(fig)
+
+st.subheader("💳 Payment Method")
 
 fig, ax=plt.subplots(figsize=(7,4))
 
