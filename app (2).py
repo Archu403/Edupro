@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# CUSTOM STYLE
+# PROFESSIONAL CSS
 # ============================================================
 
 st.markdown("""
@@ -27,16 +27,15 @@ st.markdown("""
 }
 
 .main-title {
-    font-size: 36px;
+    font-size: 38px;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 5px;
 }
 
 .sub-title {
     text-align: center;
-    font-size: 17px;
     color: #6b7280;
+    font-size: 17px;
     margin-bottom: 25px;
 }
 
@@ -49,9 +48,9 @@ st.markdown("""
 
 div[data-testid="stMetric"] {
     background-color: white;
-    border: 1px solid #e5e7eb;
     padding: 18px;
     border-radius: 12px;
+    border: 1px solid #e5e7eb;
 }
 
 [data-testid="stSidebar"] {
@@ -86,11 +85,10 @@ st.markdown("---")
 @st.cache_data
 def load_data():
 
-    df = pd.read_csv("EduPro_Final_Dataset.csv")
+    data = pd.read_csv("EduPro_Final_Dataset.csv")
 
+    # Convert numeric columns
     numeric_columns = [
-        "Age_x",
-        "Age_y",
         "Amount",
         "CoursePrice",
         "CourseDuration",
@@ -100,21 +98,61 @@ def load_data():
     ]
 
     for column in numeric_columns:
-        if column in df.columns:
-            df[column] = pd.to_numeric(
-                df[column],
+        if column in data.columns:
+            data[column] = pd.to_numeric(
+                data[column],
                 errors="coerce"
             )
 
-    df["TransactionDate"] = pd.to_datetime(
-        df["TransactionDate"],
-        errors="coerce"
-    )
+    # Convert date
+    if "TransactionDate" in data.columns:
+        data["TransactionDate"] = pd.to_datetime(
+            data["TransactionDate"],
+            errors="coerce"
+        )
 
-    return df
+    return data
 
 
 df = load_data()
+
+# ============================================================
+# REQUIRED COLUMN CHECK
+# ============================================================
+
+required_columns = [
+    "TransactionID",
+    "CourseID",
+    "TeacherID",
+    "CourseCategory",
+    "CourseLevel",
+    "CourseType",
+    "PaymentMethod",
+    "Expertise",
+    "TeacherName",
+    "TeacherRating",
+    "CourseRating",
+    "YearsOfExperience",
+    "Amount",
+    "CoursePrice",
+    "CourseDuration",
+    "TransactionDate"
+]
+
+missing_columns = [
+    column
+    for column in required_columns
+    if column not in df.columns
+]
+
+if missing_columns:
+
+    st.error("❌ Required columns are missing from your CSV:")
+
+    for column in missing_columns:
+        st.write(f"- {column}")
+
+    st.stop()
 
 # ============================================================
 # SIDEBAR
@@ -123,14 +161,14 @@ df = load_data()
 st.sidebar.title("🎛️ Dashboard Filters")
 
 st.sidebar.markdown(
-    "### Select Analysis Filters"
+    "### Select Filters"
 )
 
 st.sidebar.markdown("---")
 
-# ------------------------------------------------------------
-# COURSE CATEGORY
-# ------------------------------------------------------------
+# ============================================================
+# CATEGORY FILTER
+# ============================================================
 
 category_options = sorted(
     df["CourseCategory"]
@@ -141,13 +179,13 @@ category_options = sorted(
 
 selected_category = st.sidebar.multiselect(
     "📚 Course Category",
-    options=category_options,
+    category_options,
     default=category_options
 )
 
-# ------------------------------------------------------------
-# COURSE LEVEL
-# ------------------------------------------------------------
+# ============================================================
+# COURSE LEVEL FILTER
+# ============================================================
 
 level_options = sorted(
     df["CourseLevel"]
@@ -158,13 +196,13 @@ level_options = sorted(
 
 selected_level = st.sidebar.multiselect(
     "🎓 Course Level",
-    options=level_options,
+    level_options,
     default=level_options
 )
 
-# ------------------------------------------------------------
-# COURSE TYPE
-# ------------------------------------------------------------
+# ============================================================
+# COURSE TYPE FILTER
+# ============================================================
 
 course_type_options = sorted(
     df["CourseType"]
@@ -175,13 +213,13 @@ course_type_options = sorted(
 
 selected_course_type = st.sidebar.multiselect(
     "📖 Course Type",
-    options=course_type_options,
+    course_type_options,
     default=course_type_options
 )
 
-# ------------------------------------------------------------
-# TEACHER EXPERTISE
-# ------------------------------------------------------------
+# ============================================================
+# EXPERTISE FILTER
+# ============================================================
 
 expertise_options = sorted(
     df["Expertise"]
@@ -192,30 +230,13 @@ expertise_options = sorted(
 
 selected_expertise = st.sidebar.multiselect(
     "👨‍🏫 Instructor Expertise",
-    options=expertise_options,
+    expertise_options,
     default=expertise_options
 )
 
-# ------------------------------------------------------------
-# TEACHER GENDER
-# ------------------------------------------------------------
-
-gender_options = sorted(
-    df["Gender_y"]
-    .dropna()
-    .unique()
-    .tolist()
-)
-
-selected_gender = st.sidebar.multiselect(
-    "👤 Instructor Gender",
-    options=gender_options,
-    default=gender_options
-)
-
-# ------------------------------------------------------------
-# PAYMENT METHOD
-# ------------------------------------------------------------
+# ============================================================
+# PAYMENT FILTER
+# ============================================================
 
 payment_options = sorted(
     df["PaymentMethod"]
@@ -226,13 +247,13 @@ payment_options = sorted(
 
 selected_payment = st.sidebar.multiselect(
     "💳 Payment Method",
-    options=payment_options,
+    payment_options,
     default=payment_options
 )
 
-# ------------------------------------------------------------
-# TEACHER RATING
-# ------------------------------------------------------------
+# ============================================================
+# TEACHER RATING FILTER
+# ============================================================
 
 rating_min = float(
     df["TeacherRating"].min()
@@ -250,9 +271,9 @@ selected_rating = st.sidebar.slider(
     step=0.1
 )
 
-# ------------------------------------------------------------
-# EXPERIENCE
-# ------------------------------------------------------------
+# ============================================================
+# EXPERIENCE FILTER
+# ============================================================
 
 experience_min = int(
     df["YearsOfExperience"].min()
@@ -271,9 +292,8 @@ selected_experience = st.sidebar.slider(
 
 st.sidebar.markdown("---")
 
-st.sidebar.info(
-    "💡 Use the filters to dynamically explore "
-    "instructor and course performance."
+st.sidebar.success(
+    "Filters are applied automatically."
 )
 
 # ============================================================
@@ -289,8 +309,6 @@ filtered = df[
     &
     df["Expertise"].isin(selected_expertise)
     &
-    df["Gender_y"].isin(selected_gender)
-    &
     df["PaymentMethod"].isin(selected_payment)
     &
     df["TeacherRating"].between(
@@ -305,13 +323,13 @@ filtered = df[
 ].copy()
 
 # ============================================================
-# EMPTY DATA
+# EMPTY DATA CHECK
 # ============================================================
 
 if filtered.empty:
 
     st.warning(
-        "⚠️ No records found for the selected filters."
+        "⚠️ No records match the selected filters."
     )
 
     st.stop()
@@ -328,24 +346,28 @@ st.markdown(
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
+
     st.metric(
         "👨‍🏫 Total Instructors",
         f"{filtered['TeacherID'].nunique():,}"
     )
 
 with col2:
+
     st.metric(
         "📚 Total Courses",
         f"{filtered['CourseID'].nunique():,}"
     )
 
 with col3:
+
     st.metric(
         "⭐ Avg Teacher Rating",
         f"{filtered['TeacherRating'].mean():.2f}"
     )
 
 with col4:
+
     st.metric(
         "🌟 Avg Course Rating",
         f"{filtered['CourseRating'].mean():.2f}"
@@ -354,18 +376,21 @@ with col4:
 col5, col6, col7 = st.columns(3)
 
 with col5:
+
     st.metric(
         "💰 Total Revenue",
         f"₹{filtered['Amount'].sum():,.0f}"
     )
 
 with col6:
+
     st.metric(
         "📝 Total Transactions",
         f"{filtered['TransactionID'].nunique():,}"
     )
 
 with col7:
+
     st.metric(
         "📈 Avg Experience",
         f"{filtered['YearsOfExperience'].mean():.1f} Years"
@@ -378,15 +403,15 @@ st.markdown("---")
 # ============================================================
 
 st.markdown(
-    '<div class="section-title">👨‍🏫 Instructor Performance</div>',
+    '<div class="section-title">👨‍🏫 Instructor Performance Analysis</div>',
     unsafe_allow_html=True
 )
 
 col1, col2 = st.columns(2)
 
-# ------------------------------------------------------------
+# ============================================================
 # TEACHER RATING DISTRIBUTION
-# ------------------------------------------------------------
+# ============================================================
 
 with col1:
 
@@ -402,15 +427,15 @@ with col1:
     )
 
     ax.set_xlabel("Teacher Rating")
-    ax.set_ylabel("Number of Records")
+    ax.set_ylabel("Number of Instructors")
 
     st.pyplot(fig, use_container_width=True)
 
     plt.close(fig)
 
-# ------------------------------------------------------------
+# ============================================================
 # EXPERIENCE VS RATING
-# ------------------------------------------------------------
+# ============================================================
 
 with col2:
 
@@ -422,7 +447,6 @@ with col2:
         data=filtered,
         x="YearsOfExperience",
         y="TeacherRating",
-        hue="Expertise",
         ax=ax
     )
 
@@ -434,7 +458,7 @@ with col2:
     plt.close(fig)
 
 # ============================================================
-# TEACHER VS COURSE RATING
+# TEACHER RATING VS COURSE RATING
 # ============================================================
 
 st.subheader("🎯 Teacher Rating vs Course Rating")
@@ -445,7 +469,7 @@ sns.scatterplot(
     data=filtered,
     x="TeacherRating",
     y="CourseRating",
-    hue="CourseLevel",
+    hue="CourseCategory",
     ax=ax
 )
 
@@ -467,13 +491,13 @@ st.markdown(
 
 col1, col2 = st.columns(2)
 
-# ------------------------------------------------------------
-# CATEGORY RATING
-# ------------------------------------------------------------
+# ============================================================
+# COURSE RATING BY CATEGORY
+# ============================================================
 
 with col1:
 
-    st.subheader("📚 Average Rating by Category")
+    st.subheader("📚 Average Course Rating by Category")
 
     category_rating = (
         filtered
@@ -498,9 +522,9 @@ with col1:
 
     plt.close(fig)
 
-# ------------------------------------------------------------
+# ============================================================
 # COURSE LEVEL
-# ------------------------------------------------------------
+# ============================================================
 
 with col2:
 
@@ -526,7 +550,7 @@ with col2:
 # EXPERTISE PERFORMANCE
 # ============================================================
 
-st.subheader("🎯 Expertise-wise Performance")
+st.subheader("🎯 Expertise-wise Instructor Performance")
 
 expertise_rating = (
     filtered
@@ -542,7 +566,7 @@ expertise_rating.plot(
     ax=ax
 )
 
-ax.set_xlabel("Expertise")
+ax.set_xlabel("Instructor Expertise")
 ax.set_ylabel("Average Teacher Rating")
 
 plt.xticks(rotation=45)
@@ -552,34 +576,7 @@ st.pyplot(fig, use_container_width=True)
 plt.close(fig)
 
 # ============================================================
-# GENDER VS COURSE LEVEL
-# ============================================================
-
-st.subheader("👤 Instructor Gender vs Course Level")
-
-gender_level = pd.crosstab(
-    filtered["Gender_y"],
-    filtered["CourseLevel"]
-)
-
-fig, ax = plt.subplots(figsize=(10, 5))
-
-gender_level.plot(
-    kind="bar",
-    ax=ax
-)
-
-ax.set_xlabel("Instructor Gender")
-ax.set_ylabel("Number of Courses")
-
-plt.xticks(rotation=0)
-
-st.pyplot(fig, use_container_width=True)
-
-plt.close(fig)
-
-# ============================================================
-# INSTRUCTOR LEADERBOARD
+# TOP INSTRUCTORS
 # ============================================================
 
 st.markdown(
@@ -613,7 +610,11 @@ st.dataframe(
     hide_index=True
 )
 
-st.subheader("📉 Bottom 10 Instructors")
+# ============================================================
+# BOTTOM INSTRUCTORS
+# ============================================================
+
+st.subheader("📉 Instructors Requiring Attention")
 
 st.dataframe(
     teacher_summary
@@ -629,7 +630,7 @@ st.dataframe(
 # ============================================================
 
 st.markdown(
-    '<div class="section-title">📊 Enrollment Influence</div>',
+    '<div class="section-title">📊 Instructor Enrollment Influence</div>',
     unsafe_allow_html=True
 )
 
@@ -660,15 +661,19 @@ plt.close(fig)
 # ============================================================
 
 st.markdown(
-    '<div class="section-title">💰 Revenue Analysis</div>',
+    '<div class="section-title">💰 Revenue & Transaction Analysis</div>',
     unsafe_allow_html=True
 )
 
 col1, col2 = st.columns(2)
 
+# ============================================================
+# PAYMENT METHOD
+# ============================================================
+
 with col1:
 
-    st.subheader("💳 Payment Method")
+    st.subheader("💳 Payment Method Distribution")
 
     fig, ax = plt.subplots(figsize=(8, 5))
 
@@ -679,7 +684,7 @@ with col1:
     )
 
     ax.set_xlabel("Payment Method")
-    ax.set_ylabel("Transactions")
+    ax.set_ylabel("Number of Transactions")
 
     plt.xticks(rotation=45)
 
@@ -687,9 +692,13 @@ with col1:
 
     plt.close(fig)
 
+# ============================================================
+# REVENUE BY CATEGORY
+# ============================================================
+
 with col2:
 
-    st.subheader("💰 Revenue by Category")
+    st.subheader("💰 Revenue by Course Category")
 
     revenue_category = (
         filtered
@@ -724,23 +733,31 @@ monthly_data = filtered.dropna(
     subset=["TransactionDate"]
 ).copy()
 
-monthly_revenue = (
-    monthly_data
-    .groupby(
-        monthly_data["TransactionDate"].dt.to_period("M")
-    )["Amount"]
-    .sum()
-)
+if not monthly_data.empty:
 
-monthly_revenue.index = monthly_revenue.index.astype(str)
+    monthly_revenue = (
+        monthly_data
+        .groupby(
+            monthly_data["TransactionDate"].dt.to_period("M")
+        )["Amount"]
+        .sum()
+    )
 
-st.line_chart(
-    monthly_revenue,
-    use_container_width=True
-)
+    monthly_revenue.index = (
+        monthly_revenue.index.astype(str)
+    )
+
+    st.line_chart(
+        monthly_revenue,
+        use_container_width=True
+    )
+
+else:
+
+    st.info("No valid transaction dates available.")
 
 # ============================================================
-# CORRELATION HEATMAP
+# CORRELATION ANALYSIS
 # ============================================================
 
 st.markdown(
@@ -775,7 +792,7 @@ st.pyplot(fig, use_container_width=True)
 plt.close(fig)
 
 # ============================================================
-# RATING CONSISTENCY
+# RATING CONSISTENCY INDEX
 # ============================================================
 
 st.markdown(
@@ -802,24 +819,23 @@ consistency["RatingConsistencyIndex"] = (
     1 / (1 + consistency["RatingStdDev"])
 )
 
+consistency = consistency.sort_values(
+    "RatingConsistencyIndex",
+    ascending=False
+)
+
 st.dataframe(
-    consistency
-    .sort_values(
-        "RatingConsistencyIndex",
-        ascending=False
-    )
-    .head(10)
-    .round(3),
+    consistency.head(10).round(3),
     use_container_width=True,
     hide_index=True
 )
 
 # ============================================================
-# EXPERIENCE IMPACT
+# EXPERIENCE IMPACT SCORE
 # ============================================================
 
 st.markdown(
-    '<div class="section-title">📈 Experience Impact Score</div>',
+    '<div class="section-title">📈 Experience Impact Analysis</div>',
     unsafe_allow_html=True
 )
 
@@ -861,6 +877,55 @@ else:
     )
 
 # ============================================================
+# EXECUTIVE INSIGHTS
+# ============================================================
+
+st.markdown(
+    '<div class="section-title">💡 Executive Insights</div>',
+    unsafe_allow_html=True
+)
+
+best_category = (
+    filtered
+    .groupby("CourseCategory")["CourseRating"]
+    .mean()
+    .idxmax()
+)
+
+best_expertise = (
+    filtered
+    .groupby("Expertise")["TeacherRating"]
+    .mean()
+    .idxmax()
+)
+
+best_teacher = (
+    teacher_summary
+    .sort_values("TeacherRating", ascending=False)
+    .iloc[0]["TeacherName"]
+)
+
+st.info(
+    f"""
+**Key insights from the selected dataset**
+
+• Highest-rated course category: **{best_category}**
+
+• Highest-performing expertise: **{best_expertise}**
+
+• Top-rated instructor: **{best_teacher}**
+
+• Average teacher rating: **{filtered['TeacherRating'].mean():.2f}**
+
+• Average course rating: **{filtered['CourseRating'].mean():.2f}**
+
+• Average teaching experience: **{filtered['YearsOfExperience'].mean():.1f} years**
+
+• Total transactions: **{filtered['TransactionID'].nunique():,}**
+"""
+)
+
+# ============================================================
 # FILTERED DATA
 # ============================================================
 
@@ -876,7 +941,7 @@ st.dataframe(
 )
 
 # ============================================================
-# DOWNLOAD BUTTON
+# DOWNLOAD
 # ============================================================
 
 csv = filtered.to_csv(
@@ -899,9 +964,9 @@ st.markdown("---")
 st.markdown(
     """
     <div style="text-align:center;color:#6b7280;">
-    <b>🎓 EduPro Instructor Performance & Course Quality Evaluation</b>
-    <br>
-    Data Analytics Project | Unified Mentor
+        <b>🎓 EduPro Instructor Performance & Course Quality Evaluation</b>
+        <br>
+        Data Analytics Project | Unified Mentor
     </div>
     """,
     unsafe_allow_html=True
